@@ -1,0 +1,107 @@
+# Created by Marius Alksnys
+# marius.alksnys@gmail.com
+# +370-656-18826
+
+loadrt trivkins
+loadrt [EMCMOT]EMCMOT base_period_nsec=[EMCMOT]BASE_PERIOD servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[TRAJ]AXES
+# loadrt probe_parport # Not needed since LinuxCNC v. 2.7
+loadrt hal_parport cfg="0x378 out "
+setp parport.0.reset-time 2200
+loadrt stepgen step_type=0,0,0,0
+loadrt debounce cfg=1
+
+addf parport.0.read base-thread
+addf stepgen.make-pulses base-thread
+addf parport.0.write base-thread
+addf parport.0.reset base-thread
+
+addf stepgen.capture-position servo-thread
+addf motion-command-handler servo-thread
+addf motion-controller servo-thread
+addf stepgen.update-freq servo-thread
+addf debounce.0 servo-thread
+
+# --- Amplifiers enable signal
+net amp-enable axis.0.amp-enable-out => stepgen.0.enable stepgen.1.enable stepgen.2.enable stepgen.3.enable parport.0.pin-01-out
+# setp parport.0.pin-01-out-invert 1
+
+# --- X axis
+setp stepgen.0.position-scale [AXIS_0]SCALE
+setp stepgen.0.steplen 1000
+setp stepgen.0.stepspace 1000
+setp stepgen.0.dirhold 200
+setp stepgen.0.dirsetup 200
+setp stepgen.0.maxaccel [AXIS_0]STEPGEN_MAXACCEL
+net x-pos-cmd axis.0.motor-pos-cmd => stepgen.0.position-cmd
+net x-pos-fb stepgen.0.position-fb => axis.0.motor-pos-fb
+net x-step stepgen.0.step => parport.0.pin-02-out
+setp parport.0.pin-02-out-reset 1
+# setp parport.0.pin-02-out-invert 1
+net x-dir stepgen.0.dir => parport.0.pin-14-out
+setp parport.0.pin-14-out-invert 1
+
+# --- Y axis
+setp stepgen.1.position-scale [AXIS_1]SCALE
+setp stepgen.1.steplen 1000
+setp stepgen.1.stepspace 1000
+setp stepgen.1.dirhold 200
+setp stepgen.1.dirsetup 200
+setp stepgen.1.maxaccel [AXIS_1]STEPGEN_MAXACCEL
+net y-pos-cmd axis.1.motor-pos-cmd => stepgen.1.position-cmd
+net y-pos-fb stepgen.1.position-fb => axis.1.motor-pos-fb
+net y-step stepgen.1.step => parport.0.pin-16-out
+setp parport.0.pin-16-out-reset 1
+# setp parport.0.pin-16-out-invert 1
+net y-dir stepgen.1.dir => parport.0.pin-03-out
+# setp parport.0.pin-03-out-invert 1
+
+# --- Z axis
+setp stepgen.2.position-scale [AXIS_2]SCALE
+setp stepgen.2.steplen 1000
+setp stepgen.2.stepspace 1000
+setp stepgen.2.dirhold 200
+setp stepgen.2.dirsetup 200
+setp stepgen.2.maxaccel [AXIS_2]STEPGEN_MAXACCEL
+net z-pos-cmd axis.2.motor-pos-cmd => stepgen.2.position-cmd
+net z-pos-fb stepgen.2.position-fb => axis.2.motor-pos-fb
+net z-step stepgen.2.step => parport.0.pin-07-out
+setp parport.0.pin-07-out-reset 1
+# setp parport.0.pin-07-out-invert 1
+net z-dir stepgen.2.dir => parport.0.pin-08-out
+setp parport.0.pin-08-out-invert 1
+
+# --- A axis
+setp stepgen.3.position-scale [AXIS_3]SCALE
+setp stepgen.3.steplen 2200
+setp stepgen.3.stepspace 2200
+setp stepgen.3.dirhold 2200
+setp stepgen.3.dirsetup 2200
+setp stepgen.3.maxaccel [AXIS_3]STEPGEN_MAXACCEL
+net a-pos-cmd axis.3.motor-pos-cmd => stepgen.3.position-cmd
+net a-pos-fb stepgen.3.position-fb => axis.3.motor-pos-fb
+net a-step stepgen.3.step => parport.0.pin-06-out
+setp parport.0.pin-06-out-reset 1
+# setp parport.0.pin-06-out-invert 1
+net a-dir stepgen.3.dir => parport.0.pin-05-out
+# setp parport.0.pin-05-out-invert 1
+
+# --- Home switches
+# net home-sw axis.0.home-sw-in <= parport.0.pin-13-in # -not
+# net home-sw axis.3.home-sw-in
+
+# --- Spindle
+net spindle-cw motion.spindle-forward => parport.0.pin-09-out
+setp motion.spindle-at-speed 1
+# net spindle-cmd <= motion.spindle-speed-out
+
+# --- Emergency stop
+setp debounce.0.delay 5
+net estop-ext-raw parport.0.pin-15-in => debounce.0.0.in
+net estop-ext debounce.0.0.out => iocontrol.0.emc-enable-in
+# net estop-out <= iocontrol.0.user-enable-out
+
+loadusr -W hal_manualtoolchange
+net tool-change iocontrol.0.tool-change => hal_manualtoolchange.change
+net tool-changed iocontrol.0.tool-changed <= hal_manualtoolchange.changed
+net tool-number iocontrol.0.tool-prep-number => hal_manualtoolchange.number
+net tool-prepare-loopback iocontrol.0.tool-prepare => iocontrol.0.tool-prepared
