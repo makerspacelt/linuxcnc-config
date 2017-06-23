@@ -1,0 +1,205 @@
+// Copyright 2013
+// Charles Steinkuehler <charles@steinkuehler.net>
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "ti,beaglebone", "ti,beaglebone-black";
+
+	/* identification */
+	part-number = "SHAPEOKO-BBB";
+	version = "1";
+
+	/* state the resources this cape uses */
+	exclusive-use =
+		"P8.26",	/* gpio 1.29	Status 	*/
+
+		"P8.8",	        /* gpio 2.3     X-Home 	*/
+		"P8.9",	        /* gpio 2.5     Y-Home 	*/
+		"P8.10",        /* gpio 2.4    	Z-Home 	*/
+		"P8.14",	/* gpio 0.26	E-Stop	*/
+
+		"P8.12",        /* gpio 1.12    X-Step	 */
+		"P8.11",        /* gpio 1.13    X-Dir 	 */
+		"P8.16",        /* gpio 1.14    Y-Step	 */
+		"P8.15",        /* gpio 1.15    Y-Dir	 */
+		"P9.15",        /* gpio 1.16    Z-Step	 */
+		"P9.23",        /* gpio 1.17    Z-Dir 	 */
+		"pru1",
+		"pruss";
+
+	fragment@0 {
+		target = <&am33xx_pinmux>;
+		__overlay__ {
+
+			shapeoko_io_status_pins: pinmux_shapeoko_io_status_pins {
+				pinctrl-single,pins = <
+					0x07C 0x0F	/* p8.26	gpio1.29	Status	*/
+				>;
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <&ocp>;
+		__overlay__ {
+
+			shapeoko_io_enables {
+				compatible = "gpio-of-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <&shapeoko_io_status_pins>;
+
+				io_enable_n {
+					gpio-name = "shapeoko:io_enable_n";
+					gpio = <&gpio2 29 0>;
+					output;
+					init-low;
+				};
+			};
+		};
+	};
+
+	fragment@2 {
+		target = <&am33xx_pinmux>;
+		__overlay__ {
+
+			shapeoko_stepper_pins: pinmux_shapeoko_stepper_pins {
+				status = "okay";
+				pinctrl-single,pins = <
+					/* stepper outputs */
+					0x030 0x07	/* #X_STP, P8_12, gpio1.12, mode7 out */
+					0x034 0x07	/* #X_DIR, P8_11, gpio1.13, mode7 out */
+					0x038 0x07	/* #Y_STP, P8_16, gpio1.14, mode7 out */
+					0x03c 0x07	/* #Y_DIR, P8_15, gpio1.15, mode7 out */
+					0x040 0x07	/* #Z_STP, P9_15, gpio1.16, mode7 out */
+					0x044 0x07	/* #Z_DIR, P9_23, gpio1.17, mode7 out */
+				>;
+			};
+		};
+	};
+
+	fragment@3 {
+		target = <&ocp>;
+		__overlay__ {
+
+			shapeoko_steppers {
+				compatible = "gpio-of-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <&shapeoko_stepper_pins>;
+
+				x_stp {
+					gpio-name = "shapeoko:x_stp";
+					gpio = <&gpio2 12 0>;
+					output;
+					init-low;
+				};
+				x_dir {
+					gpio-name = "shapeoko:x_dir";
+					gpio = <&gpio2 13 0>;
+					output;
+					init-low;
+				};
+				y_stp {
+					gpio-name = "shapeoko:y_stp";
+					gpio = <&gpio2 14 0>;
+					output;
+					init-low;
+				};
+				y_dir {
+					gpio-name = "shapeoko:y_dir";
+					gpio = <&gpio2 15 0>;
+					output;
+					init-low;
+				};
+				z_stp {
+					gpio-name = "shapeoko:z_stp";
+					gpio = <&gpio2 16 0>;
+					output;
+					init-low;
+				};
+				z_dir {
+					gpio-name = "shapeoko:z_dir";
+					gpio = <&gpio2 17 0>;
+					output;
+					init-low;
+				};
+			};
+		};
+	};
+
+	fragment@4 {
+                target = <&am33xx_pinmux>;
+                __overlay__ {
+
+                        shapeoko_sensor_pins: pinmux_shapeoko_sensor_pins {
+                                status = "okay";
+                                pinctrl-single,pins = <
+                                        /* sensor inputs */
+					0x094 0x37      /* #X_HOME, P8_8,  gpio2.3,  mode7 in pullup */
+					0x09c 0x37      /* #Y_HOME, P8_9,  gpio2.5,  mode7 in pullup */
+					0x098 0x37      /* #Z_HOME, P8_10, gpio2.4,  mode7 in pullup */
+					0x028 0x37      /* #E_STOP, P8_14, gpio0.26, mode7 in pullup */
+                                >;
+                        };
+                };
+        };
+
+	fragment@5 {
+		target = <&ocp>;
+		__overlay__ {
+
+			shapeoko_sensors {
+				compatible = "gpio-of-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <&shapeoko_sensor_pins>;
+
+				x_home {
+					gpio-name = "shapeoko:x_home";
+					gpio = <&gpio3 3 0>;
+					input;
+				};
+				y_home {
+					gpio-name = "shapeoko:y_home";
+					gpio = <&gpio3 5 0>;
+					input;
+				};
+				z_home {
+					gpio-name = "shapeoko:z_home";
+					gpio = <&gpio3 4 0>;
+					input;
+				};
+				e_stop {
+					gpio-name = "shapeoko:e_stop";
+					gpio = <&gpio1 26 0>;
+					input;
+				};
+			};
+		};
+	};
+
+	fragment@6 {
+		target = <&pruss>;
+		__overlay__ {
+			status = "okay";
+		};
+	};
+};
+

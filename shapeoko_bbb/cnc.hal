@@ -5,8 +5,7 @@
 # ########################################
 
 # Launch the setup script to make sure hardware setup looks good
-# loadusr -w ./setup.pins.sh
-
+loadusr -w ./pre-run.sh
 
 # ###################################
 # Core EMC/HAL Loads
@@ -21,8 +20,11 @@ loadrt tp
 loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[TRAJ]AXES tp=tp kins=trivkins
 
 # load low-level drivers
-loadrt hal_bb_gpio output_pins=107,126,217,218,226
+loadrt hal_bb_gpio output_pins=126 input_pins=108,109,110,114
 loadrt [PRUCONF](DRIVER) prucode=$(HAL_RTMOD_DIR)/[PRUCONF](PRUBIN) [PRUCONF](CONFIG) halname=hpg
+
+# Deboune conponent
+newinst debounce dbc pincount=1
 
 
 # ################################################
@@ -34,6 +36,8 @@ addf hpg.update                           servo-thread
 addf motion-command-handler               servo-thread
 addf motion-controller                    servo-thread
 addf bb_gpio.write                        servo-thread
+addf bb_gpio.read						  servo-thread
+addf dbc.funct							  servo-thread
 
 
 # ################
@@ -139,32 +143,18 @@ setp hpg.stepgen.02.dirpin          0x51
 # Standard I/O - EStop, Enables, Limit Switches, Etc
 # ##################################################
 
-# create a signal for the estop loopback
-net estop-loop iocontrol.0.user-enable-out => iocontrol.0.emc-enable-in
-
 # create signals for tool loading loopback
 net tool-prep-loop iocontrol.0.tool-prepare => iocontrol.0.tool-prepared
 net tool-change-loop iocontrol.0.tool-change => iocontrol.0.tool-changed
 
-# Axis enable signals
-net emcmot.00.enable => bb_gpio.p9.out-18
-setp bb_gpio.p9.out-18.invert 1
-net emcmot.01.enable => bb_gpio.p9.out-17
-setp bb_gpio.p9.out-17.invert 1
-net emcmot.02.enable => bb_gpio.p9.out-26
-setp bb_gpio.p9.out-26.invert 1
-
-# Enable tied to system Reset_n line (P9.10)
-net estop-loop => bb_gpio.p8.out-07
-setp bb_gpio.p8.out-07.invert 1
+# Remote E-Stop debounced
+setp dbc.delay 5
+net estop-ext-raw bb_gpio.p8.in-14 => dbc.0.in
+net estop-ext dbc.0.out => iocontrol.0.emc-enable-in
+setp bb_gpio.p8.in-14.invert 1
 
 
-# --- Emergency stop
-#setp debounce.0.delay 5
-#net estop-ext-raw parport.0.pin-15-in => debounce.0.0.in
-#net estop-ext debounce.0.0.out => iocontrol.0.emc-enable-in
-# net estop-out <= iocontrol.0.user-enable-out
-
+#TODO:
 #oadusr -W hal_manualtoolchange
 #net tool-change iocontrol.0.tool-change => hal_manualtoolchange.change
 #net tool-changed iocontrol.0.tool-changed <= hal_manualtoolchange.changed
