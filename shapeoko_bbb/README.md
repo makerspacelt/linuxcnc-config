@@ -20,15 +20,15 @@ Moving Device Tree Blob to firmwares ...
 ```
 ### Pinout
 ```
-	"P8.8",	        /* gpio 2.3     X-Home 	*/
-	"P8.9",	        /* gpio 2.5     Y-Home 	*/
-	"P8.10",        /* gpio 2.4    	Z-Home 	*/
-	"P8.14",	    /* gpio 0.26	E-Stop	*/
+	"P8.8",   /* gpio 2.3    X-Home  */
+	"P8.9",   /* gpio 2.5    Y-Home  */
+	"P8.10",  /* gpio 2.4    Z-Home  */
+	"P8.14",  /* gpio 0.26   E-Stop	 */
 
-	"P8.12",        /* gpio 1.12    X-Step	 */
-	"P8.11",        /* gpio 1.13    X-Dir 	 */
-	"P8.16",        /* gpio 1.14    Y-Step	 */
-	"P8.15",        /* gpio 1.15    Y-Dir	 */
-	"P9.15",        /* gpio 1.16    Z-Step	 */
-	"P9.23",        /* gpio 1.17    Z-Dir 	 */
+	"P8.12",  /* gpio 1.12   X-Step	 */
+	"P8.11",  /* gpio 1.13   X-Dir 	 */
+	"P8.16",  /* gpio 1.14   Y-Step	 */
+	"P8.15",  /* gpio 1.15   Y-Dir	 */
+	"P9.15",  /* gpio 1.16   Z-Step	 */
+	"P9.23",  /* gpio 1.17   Z-Dir 	 */
 ```
