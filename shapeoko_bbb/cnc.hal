@@ -20,7 +20,7 @@ loadrt tp
 loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[TRAJ]AXES tp=tp kins=trivkins
 
 # load low-level drivers
-loadrt hal_bb_gpio output_pins=126 input_pins=108,109,110,114
+loadrt hal_bb_gpio output_pins=212,226,107,115 input_pins=108,110,112,114
 loadrt [PRUCONF](DRIVER) prucode=$(HAL_RTMOD_DIR)/[PRUCONF](PRUBIN) [PRUCONF](CONFIG) halname=hpg
 
 # Deboune conponent
@@ -36,8 +36,8 @@ addf hpg.update                           servo-thread
 addf motion-command-handler               servo-thread
 addf motion-controller                    servo-thread
 addf bb_gpio.write                        servo-thread
-addf bb_gpio.read						  servo-thread
-addf dbc.funct							  servo-thread
+addf bb_gpio.read			  servo-thread
+addf dbc.funct				  servo-thread
 
 
 # ################
@@ -69,8 +69,8 @@ setp hpg.stepgen.00.position-scale  [AXIS_0]SCALE
 
 setp hpg.stepgen.00.maxaccel        [AXIS_0]STEPGEN_MAX_ACC
 
-setp hpg.stepgen.00.steppin         0x4C
-setp hpg.stepgen.00.dirpin          0x4D
+setp hpg.stepgen.00.steppin         101
+setp hpg.stepgen.00.dirpin          77
 
 
 # ################
@@ -102,8 +102,8 @@ setp hpg.stepgen.01.position-scale  [AXIS_1]SCALE
 
 setp hpg.stepgen.01.maxaccel        [AXIS_1]STEPGEN_MAX_ACC
 
-setp hpg.stepgen.01.steppin         0x4E
-setp hpg.stepgen.01.dirpin          0x4F
+setp hpg.stepgen.01.steppin         59
+setp hpg.stepgen.01.dirpin          54
 
 
 # ################
@@ -135,33 +135,41 @@ setp hpg.stepgen.02.position-scale  [AXIS_2]SCALE
 
 setp hpg.stepgen.02.maxaccel        [AXIS_2]STEPGEN_MAX_ACC
 
-setp hpg.stepgen.02.steppin         0x50
-setp hpg.stepgen.02.dirpin          0x51
+setp hpg.stepgen.02.steppin         145
+setp hpg.stepgen.02.dirpin          144
 
 
 # ##################################################
 # Standard I/O - EStop, Enables, Limit Switches, Etc
 # ##################################################
 
+# Enables
+net emcmot.00.enable => bb_gpio.p8.out-07
+setp bb_gpio.p8.out-07.invert 1
+net emcmot.01.enable => bb_gpio.p8.out-15
+setp bb_gpio.p8.out-15.invert 1
+net emcmot.02.enable => bb_gpio.p9.out-26
+setp bb_gpio.p9.out-26.invert 1
+
 # Home switches
 # X
-net x-home bb_gpio.p8.in-08 => axis.0.home-sw-in
-setp bb_gpio.p8.in-08.invert 1
+net x-home bb_gpio.p8.in-10 => axis.0.home-sw-in
+setp bb_gpio.p8.in-10.invert 1
 
 # Y
-net y-home bb_gpio.p8.in-09 => axis.1.home-sw-in
-setp bb_gpio.p8.in-09.invert 1
+net y-home bb_gpio.p8.in-12 => axis.1.home-sw-in
+setp bb_gpio.p8.in-12.invert 1
 
 # Z
-net z-home bb_gpio.p8.in-10 => axis.2.home-sw-in
-setp bb_gpio.p8.in-10.invert 1
+net z-home bb_gpio.p8.in-14 => axis.2.home-sw-in
+setp bb_gpio.p8.in-14.invert 1
 
 
 # Remote E-Stop debounced
 setp dbc.delay 5
-net estop-ext-raw bb_gpio.p8.in-14 => dbc.0.in
+net estop-ext-raw bb_gpio.p8.in-08 => dbc.0.in
 net estop-ext dbc.0.out => iocontrol.0.emc-enable-in
-setp bb_gpio.p8.in-14.invert 1
+setp bb_gpio.p8.in-08.invert 1
 
 
 # Manual tool change scripts
