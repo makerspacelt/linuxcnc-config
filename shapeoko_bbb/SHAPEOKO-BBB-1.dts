@@ -37,7 +37,7 @@
 		"P8.11",        /* gpio 1.13   X-Dir	 */
 		"P8.15",        /* gpio 1.15   Y-En	 */
 		"P8.17",        /* gpio 0.27   Y-Step	 */
-		"P8.19",        /* gpio 0.22   Y-Dir 	 */
+		"P8.13",        /* gpio 0.23   Y-Dir 	 */
 		"P9.26",        /* gpio 0.14   Z-En      */
                 "P9.28",        /* gpio 3.17   Z-Step    */
                 "P9.30",        /* gpio 3.16   Z-Dir     */
@@ -62,7 +62,7 @@
 					0x034 0x07
 					0x03c 0x07
 					0x02c 0x07
-					0x020 0x07
+					0x024 0x07
 					0x180 0x07
 					0x19c 0x07
 					0x198 0x07
@@ -116,7 +116,7 @@
 				};
 				y_dir {
 					gpio-name = "shapeoko:y_dir";
-					gpio = <&gpio1 22 0>;
+					gpio = <&gpio1 23 0>;
 					output;
 					init-low;
 				};

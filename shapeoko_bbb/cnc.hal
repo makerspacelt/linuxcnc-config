@@ -20,7 +20,7 @@ loadrt tp
 loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[TRAJ]AXES tp=tp kins=trivkins
 
 # load low-level drivers
-loadrt hal_bb_gpio output_pins=212,226,107,115 input_pins=108,110,112,114
+loadrt hal_bb_gpio output_pins=216,230,107,113 input_pins=108,110,112,114
 loadrt [PRUCONF](DRIVER) prucode=$(HAL_RTMOD_DIR)/[PRUCONF](PRUBIN) [PRUCONF](CONFIG) halname=hpg
 
 # Deboune conponent
@@ -102,8 +102,8 @@ setp hpg.stepgen.01.position-scale  [AXIS_1]SCALE
 
 setp hpg.stepgen.01.maxaccel        [AXIS_1]STEPGEN_MAX_ACC
 
-setp hpg.stepgen.01.steppin         59
-setp hpg.stepgen.01.dirpin          54
+setp hpg.stepgen.01.steppin         79
+setp hpg.stepgen.01.dirpin          59
 
 
 # ################
@@ -136,7 +136,7 @@ setp hpg.stepgen.02.position-scale  [AXIS_2]SCALE
 setp hpg.stepgen.02.maxaccel        [AXIS_2]STEPGEN_MAX_ACC
 
 setp hpg.stepgen.02.steppin         145
-setp hpg.stepgen.02.dirpin          144
+setp hpg.stepgen.02.dirpin          46
 
 
 # ##################################################
@@ -146,10 +146,10 @@ setp hpg.stepgen.02.dirpin          144
 # Enables
 net emcmot.00.enable => bb_gpio.p8.out-07
 setp bb_gpio.p8.out-07.invert 1
-net emcmot.01.enable => bb_gpio.p8.out-15
-setp bb_gpio.p8.out-15.invert 1
-net emcmot.02.enable => bb_gpio.p9.out-26
-setp bb_gpio.p9.out-26.invert 1
+net emcmot.01.enable => bb_gpio.p8.out-13
+setp bb_gpio.p8.out-13.invert 1
+net emcmot.02.enable => bb_gpio.p9.out-30
+setp bb_gpio.p9.out-30.invert 1
 
 # Home switches
 # X
