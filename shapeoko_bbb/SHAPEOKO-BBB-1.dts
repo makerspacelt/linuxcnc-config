@@ -32,6 +32,9 @@
 		"P8.12",        /* gpio 1.12    Y-Home 	*/
 		"P8.14",        /* gpio 0.26   	Z-Home 	*/
 
+		"P8.16",	/* gpio 1.14 	PRU0-in */
+		"P8.18", 	/* gpio 2.1  	PWM 	*/
+
 		"P8.7",         /* gpio 2.2    X-En	 */
 		"P8.9",         /* gpio 2.5    X-Step 	 */
 		"P8.11",        /* gpio 1.13   X-Dir	 */
@@ -45,7 +48,7 @@
                 "P9.14",        /* gpio 1.18   A-Step    */
                 "P9.16",        /* gpio 1.19   A-Dir     */
 
-		"pru1",
+		"pru0",
 		"pruss";
 
 
@@ -69,6 +72,7 @@
 					0x078 0x07
 					0x048 0x07
 					0x04c 0x07
+					0x08c 0x07
 				>;
 			};
 		};
@@ -156,6 +160,12 @@
                                         output;
                                         init-low;
                                 };
+				p_wm {
+					gpio-name = "shapeoko:p_wm";
+                                        gpio = <&gpio3 1 0>;
+                                        output;
+                                        init-low;
+				};
 			};
 		};
 	};
@@ -212,10 +222,25 @@
 	};
 
 	fragment@6 {
+		target = <&am33xx_pinmux>;
+		__overlay__ {
+			shapeoko_pru_pins: pinmus_shapeoko_pru_pins {
+				status = "okay";
+				pinctrl-single,pins = <
+					0x038 0x36
+				>;
+			};
+		};
+	};
+
+	fragment@7 {
 		target = <&pruss>;
 		__overlay__ {
 			status = "okay";
+			pinctrl-names = "default";  
+		  	pinctrl-0 = <&shapeoko_pru_pins>;  
 		};
 	};
+
 };
 
