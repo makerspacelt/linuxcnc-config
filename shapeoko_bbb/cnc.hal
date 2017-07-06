@@ -26,14 +26,18 @@ loadrt [PRUCONF](DRIVER) prucode=$(HAL_RTMOD_DIR)/[PRUCONF](PRUBIN) [PRUCONF](CO
 # Deboune conponent
 newinst debounce dbc pincount=1
 
-# Multiplication for rps -> rpm
-newinst mult2 mrpm
 
 # ramp
 newinst limit2 ramp
 
-loadrt lowpassv2
-loadrt near
+loadrt sum2 names=pid-correction 
+loadrt abs names=abs-speed 
+loadrt scale names=spindle-rps2rpm 
+loadrt lowpass names=spindle-rpm-filter 
+loadrt near names=spindle-at-speed-detect 
+loadrt pid names=speed-pid 
+loadrt limit1 names=pid-limit 
+
 
 # ################################################
 # THREADS
@@ -46,10 +50,15 @@ addf motion-controller                    servo-thread
 addf bb_gpio.write                        servo-thread
 addf bb_gpio.read			  servo-thread
 addf dbc.funct				  servo-thread
-addf lowpassv2.0.funct			  servo-thread
-addf near.0.funct			  servo-thread
-addf mrpm.funct				  servo-thread
-addf ramp.funct				  servo-thread
+
+addf pid-correction servo-thread 
+addf abs-speed servo-thread 
+addf spindle-rps2rpm servo-thread 
+addf spindle-rpm-filter servo-thread 
+addf spindle-at-speed-detect servo-thread 
+addf speed-pid.do-pid-calcs servo-thread 
+addf pid-limit servo-thread 
+
 
 # ################
 # PWM
@@ -57,10 +66,9 @@ addf ramp.funct				  servo-thread
 setp hpg.pwmgen.00.pwm_period 100000
 setp hpg.pwmgen.00.out.00.pin 97
 setp hpg.pwmgen.00.out.00.enable 1
-setp hpg.pwmgen.00.out.00.scale 10000
-setp ramp.maxv 3000
-net speed-in motion.spindle-speed-out => ramp.in
-net speed-out ramp.out => hpg.pwmgen.00.out.00.value
+setp hpg.pwmgen.00.out.00.scale 11000
+setp hpg.pwmgen.00.out.00.value 0.0
+setp ramp.maxv 50
 
 
 # ################
@@ -73,22 +81,49 @@ setp hpg.encoder.00.chan.00.A-invert        1
 setp hpg.encoder.00.chan.00.B-pin           27
 setp hpg.encoder.00.chan.00.index-pin       27
 setp hpg.encoder.00.chan.00.scale           7
-setp hpg.encoder.00.chan.00.vel-timeout     3.0
+setp hpg.encoder.00.chan.00.vel-timeout     1.0
 net vel hpg.encoder.00.chan.00.velocity
 
-setp lowpassv2.0.gain 0.3
-setp near.0.scale 1.1
-setp near.0.difference 0.1
+#net spindle-at-speed motion.spindle-at-speed <= spindle-at-speed-detect.out 
+setp motion.spindle-at-speed 1
+setp spindle-at-speed-detect.scale 1.2 
 
-net srps motion.spindle-speed-out-rps => near.0.in1
-net vel => motion.spindle-speed-in lowpassv2.0.in
-net sflt lowpassv2.0.out => near.0.in2
-net at-speed near.0.out => motion.spindle-at-speed
+setp speed-pid.Pgain 0
+setp speed-pid.Igain 0 
+setp speed-pid.Dgain 0 
+setp speed-pid.maxoutput 11000
+setp speed-pid.deadband 5 
 
-net sflt => mrpm.in0
-setp mrpm.in1 60
-net rpm mrpm.out
+setp pid-correction.offset 0 
 
+
+# Stop pid output going negative 
+setp pid-limit.min -200 
+
+
+# Scale RPS to RPM 
+setp spindle-rps2rpm.gain 60 
+
+# Filter RPM for the display 
+setp spindle-rpm-filter.gain 0.01 
+
+# Attach motion.spindle on to enable PID, PWM is always enabled due to a bug that 
+# causes it to output at 100% when disabled! 
+net spindle_enable motion.spindle-on => speed-pid.enable 
+
+# Attach the pid to scale, motion and sum 
+net vel => spindle-rps2rpm.in => motion.spindle-speed-in
+net pid_feedback speed-pid.feedback <= spindle-rps2rpm.out => spindle-at-speed-detect.in2 => spindle-rpm-filter.in 
+net pid_command  speed-pid.command  <= motion.spindle-speed-out => spindle-at-speed-detect.in1 => pid-correction.in0 
+net pid_output   speed-pid.output   => pid-limit.in 
+net pid_output_ltd pid-limit.out => pid-correction.in1 
+
+net pwmgen_value abs-speed.in <= pid-correction.out 
+
+net pwmgen_value-abs abs-speed.out => hpg.pwmgen.00.out.00.value 
+
+# For display in pyvcp 
+net smoothed_rpm spindle-rpm-filter.out  
 
 # ################
 # X [0] Axis
@@ -145,8 +180,8 @@ net motor.01.pos-fb => axis.1.motor-pos-fb
 setp hpg.stepgen.01.dirsetup        200 #[AXIS_1]DIRSETUP
 setp hpg.stepgen.01.dirhold         200 #[AXIS_1]DIRHOLD
 
-setp hpg.stepgen.01.steplen         1000 #[AXIS_1]STEPLEN
-setp hpg.stepgen.01.stepspace       1000 #[AXIS_1]STEPSPACE
+setp hpg.stepgen.01.steplen         10000 #[AXIS_1]STEPLEN
+setp hpg.stepgen.01.stepspace       10000 #[AXIS_1]STEPSPACE
 
 setp hpg.stepgen.01.position-scale  [AXIS_1]SCALE
 
@@ -178,8 +213,8 @@ net motor.02.pos-fb => axis.2.motor-pos-fb
 setp hpg.stepgen.02.dirsetup        200 #[AXIS_2]DIRSETUP
 setp hpg.stepgen.02.dirhold         200 #[AXIS_2]DIRHOLD
 
-setp hpg.stepgen.02.steplen         1000 #[AXIS_2]STEPLEN
-setp hpg.stepgen.02.stepspace       1000 #[AXIS_2]STEPSPACE
+setp hpg.stepgen.02.steplen         10000 #[AXIS_2]STEPLEN
+setp hpg.stepgen.02.stepspace       10000 #[AXIS_2]STEPSPACE
 
 setp hpg.stepgen.02.position-scale  [AXIS_2]SCALE
 
@@ -222,13 +257,13 @@ net estop-ext dbc.0.out => iocontrol.0.emc-enable-in
 setp bb_gpio.p8.in-08.invert 1
 
 # create signals for tool loading loopback
-net tool-prep-loop iocontrol.0.tool-prepare => iocontrol.0.tool-prepared
-net tool-change-loop iocontrol.0.tool-change => iocontrol.0.tool-changed
+#net tool-prep-loop iocontrol.0.tool-prepare => iocontrol.0.tool-prepared
+#net tool-change-loop iocontrol.0.tool-change => iocontrol.0.tool-changed
 
 
 # Manual tool change scripts
-#loadusr -W hal_manualtoolchange
-#net tool-change iocontrol.0.tool-change => hal_manualtoolchange.change
-#net tool-changed iocontrol.0.tool-changed <= hal_manualtoolchange.changed
-#net tool-number iocontrol.0.tool-prep-number => hal_manualtoolchange.number
-#net tool-prepare-loopback iocontrol.0.tool-prepare => iocontrol.0.tool-prepared
+loadusr -W hal_manualtoolchange
+net tool-change iocontrol.0.tool-change => hal_manualtoolchange.change
+net tool-changed iocontrol.0.tool-changed <= hal_manualtoolchange.changed
+net tool-number iocontrol.0.tool-prep-number => hal_manualtoolchange.number
+net tool-prepare-loopback iocontrol.0.tool-prepare => iocontrol.0.tool-prepared
