@@ -25,14 +25,14 @@ Moving Device Tree Blob to firmwares ...
 	"P9.14",  /* gpio 1.18 A-Step    */
 	"P9.16",  /* gpio 1.19 A-Enable  */
 	"P9.26",  /* gpio 0.14 Z-Dir     */
-    "P9.28",  /* gpio 3.17 Z-Step    */
-    "P9.30",  /* gpio 3.16 Z-Enable  */
+	"P9.28",  /* gpio 3.17 Z-Step    */
+	"P9.30",  /* gpio 3.16 Z-Enable  */
 	"P8.11",  /* gpio 1.13 X-Dir     */
 	"P8.9",   /* gpio 2.5  X-Step    */
 	"P8.7",   /* gpio 2.2  X-Enable  */
 	"P8.13",  /* gpio 0.23 Y-Dir     */
-    "P8.15",  /* gpio 1.15 Y-Step    */
-    "P8.17",  /* gpio 0.27 Y-Enable  */
+	"P8.15",  /* gpio 1.15 Y-Step    */
+	"P8.17",  /* gpio 0.27 Y-Enable  */
 
 	/* Home sw., E-Stop */
 	"P8.8",   /* gpio 2.3  E-Stop    */
