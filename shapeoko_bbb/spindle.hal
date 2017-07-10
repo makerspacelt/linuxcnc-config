@@ -1,1 +1,2 @@
-net rpm => pyvcp.spindle-speed
+net smoothed_rpm => pyvcp.spindle-speed
+

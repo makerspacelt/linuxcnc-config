@@ -20,15 +20,28 @@ Moving Device Tree Blob to firmwares ...
 ```
 ### Pinout
 ```
-	"P8.8",   /* gpio 2.3    X-Home  */
-	"P8.9",   /* gpio 2.5    Y-Home  */
-	"P8.10",  /* gpio 2.4    Z-Home  */
-	"P8.14",  /* gpio 0.26   E-Stop	 */
+	/* Steppers */
+	"P9.12",  /* gpio 1.28 A-Dir     */
+	"P9.14",  /* gpio 1.18 A-Step    */
+	"P9.16",  /* gpio 1.19 A-Enable  */
+	"P9.26",  /* gpio 0.14 Z-Dir     */
+    "P9.28",  /* gpio 3.17 Z-Step    */
+    "P9.30",  /* gpio 3.16 Z-Enable  */
+	"P8.11",  /* gpio 1.13 X-Dir     */
+	"P8.9",   /* gpio 2.5  X-Step    */
+	"P8.7",   /* gpio 2.2  X-Enable  */
+	"P8.13",  /* gpio 0.23 Y-Dir     */
+    "P8.15",  /* gpio 1.15 Y-Step    */
+    "P8.17",  /* gpio 0.27 Y-Enable  */
 
-	"P8.12",  /* gpio 1.12   X-Step	 */
-	"P8.11",  /* gpio 1.13   X-Dir 	 */
-	"P8.16",  /* gpio 1.14   Y-Step	 */
-	"P8.15",  /* gpio 1.15   Y-Dir	 */
-	"P9.15",  /* gpio 1.16   Z-Step	 */
-	"P9.23",  /* gpio 1.17   Z-Dir 	 */
+	/* Home sw., E-Stop */
+	"P8.8",   /* gpio 2.3  E-Stop    */
+	"P8.10",  /* gpio 2.4  X-Home    */
+	"P8.12",  /* gpio 1.12 Y-Home    */
+	"P8.14",  /* gpio 0.26 Z-Home    */
+
+	/* Spindle + sense */
+	"P8.18",  /* gpio 2.1  PWM       */
+	"P8.16",  /* gpio 1.14 Sense PRU */
 ```
+
