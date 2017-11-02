@@ -1,0 +1,277 @@
+# ########################################
+# Derived from example hm2-stepper config
+# And Marius Alksnys previous work
+# ########################################
+
+
+# Launch the setup script to make sure hardware setup looks good
+loadusr -w ./pre-run.sh
+
+# Haltalk
+loadusr -W haltalk
+
+# ###################################
+# Core EMC/HAL Loads
+# ###################################
+
+# kinematics
+loadrt trivkins
+
+# motion controller, get name and thread periods from ini file
+# trajectory planner
+loadrt tp
+loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[TRAJ]AXES tp=tp kins=trivkins
+
+# load low-level drivers
+loadrt hal_bb_gpio output_pins=216,230,107,113 input_pins=108,110,112,114
+loadrt [PRUCONF](DRIVER) prucode=$(HAL_RTMOD_DIR)/[PRUCONF](PRUBIN) [PRUCONF](CONFIG) halname=hpg
+
+# Deboune conponent
+newinst debounce dbc pincount=1
+
+
+# ramp
+newinst limit2 ramp
+
+loadrt sum2 names=pid-correction 
+loadrt abs names=abs-speed 
+loadrt scale names=spindle-rps2rpm 
+loadrt lowpass names=spindle-rpm-filter 
+loadrt near names=spindle-at-speed-detect 
+loadrt pid names=speed-pid 
+loadrt limit1 names=pid-limit 
+
+
+# ################################################
+# THREADS
+# ################################################
+
+addf hpg.capture-position                 servo-thread
+addf hpg.update                           servo-thread
+addf motion-command-handler               servo-thread
+addf motion-controller                    servo-thread
+addf bb_gpio.write                        servo-thread
+addf bb_gpio.read			  servo-thread
+addf dbc.funct				  servo-thread
+
+addf pid-correction servo-thread 
+addf abs-speed servo-thread 
+addf spindle-rps2rpm servo-thread 
+addf spindle-rpm-filter servo-thread 
+addf spindle-at-speed-detect servo-thread 
+addf speed-pid.do-pid-calcs servo-thread 
+addf pid-limit servo-thread 
+
+
+# ################
+# PWM
+# ################
+setp hpg.pwmgen.00.pwm_period 100000
+setp hpg.pwmgen.00.out.00.pin 97
+setp hpg.pwmgen.00.out.00.enable 1
+setp hpg.pwmgen.00.out.00.scale 11000
+setp hpg.pwmgen.00.out.00.value 0.0
+setp ramp.maxv 50
+
+
+# ################
+# Encoder
+# ################
+
+setp hpg.encoder.00.chan.00.counter-mode    2
+setp hpg.encoder.00.chan.00.A-pin           14
+setp hpg.encoder.00.chan.00.A-invert        1
+setp hpg.encoder.00.chan.00.B-pin           27
+setp hpg.encoder.00.chan.00.index-pin       27
+setp hpg.encoder.00.chan.00.scale           7
+setp hpg.encoder.00.chan.00.vel-timeout     1.0
+net vel hpg.encoder.00.chan.00.velocity
+
+#net spindle-at-speed motion.spindle-at-speed <= spindle-at-speed-detect.out 
+setp motion.spindle-at-speed 1
+setp spindle-at-speed-detect.scale 1.2 
+
+setp speed-pid.Pgain 0
+setp speed-pid.Igain 0 
+setp speed-pid.Dgain 0 
+setp speed-pid.maxoutput 11000
+setp speed-pid.deadband 5 
+
+setp pid-correction.offset 0 
+
+
+# Stop pid output going negative 
+setp pid-limit.min -200 
+
+
+# Scale RPS to RPM 
+setp spindle-rps2rpm.gain 60 
+
+# Filter RPM for the display 
+setp spindle-rpm-filter.gain 0.01 
+
+# Attach motion.spindle on to enable PID, PWM is always enabled due to a bug that 
+# causes it to output at 100% when disabled! 
+net spindle_enable motion.spindle-on => speed-pid.enable 
+
+# Attach the pid to scale, motion and sum 
+net vel => spindle-rps2rpm.in => motion.spindle-speed-in
+net pid_feedback speed-pid.feedback <= spindle-rps2rpm.out => spindle-at-speed-detect.in2 => spindle-rpm-filter.in 
+net pid_command  speed-pid.command  <= motion.spindle-speed-out => spindle-at-speed-detect.in1 => pid-correction.in0 
+net pid_output   speed-pid.output   => pid-limit.in 
+net pid_output_ltd pid-limit.out => pid-correction.in1 
+
+net pwmgen_value abs-speed.in <= pid-correction.out 
+
+net pwmgen_value-abs abs-speed.out => hpg.pwmgen.00.out.00.value 
+
+# For display in pyvcp 
+net smoothed_rpm spindle-rpm-filter.out  
+
+# ################
+# X [0] Axis
+# ################
+
+# axis enable chain
+newsig emcmot.00.enable bit
+sets emcmot.00.enable FALSE
+
+net emcmot.00.enable <= axis.0.amp-enable-out
+net emcmot.00.enable => hpg.stepgen.00.enable
+
+# position command and feedback
+net emcmot.00.pos-cmd <= axis.0.motor-pos-cmd
+net emcmot.00.pos-cmd => hpg.stepgen.00.position-cmd
+
+net motor.00.pos-fb <= hpg.stepgen.00.position-fb
+net motor.00.pos-fb => axis.0.motor-pos-fb
+
+# timing parameters
+setp hpg.stepgen.00.dirsetup        200 #[AXIS_0]DIRSETUP
+setp hpg.stepgen.00.dirhold         200 #[AXIS_0]DIRHOLD
+
+setp hpg.stepgen.00.steplen         10000 #[AXIS_0]STEPLEN
+setp hpg.stepgen.00.stepspace       10000 #[AXIS_0]STEPSPACE
+
+setp hpg.stepgen.00.position-scale  [AXIS_0]SCALE
+
+setp hpg.stepgen.00.maxaccel        [AXIS_0]STEPGEN_MAX_ACC
+
+setp hpg.stepgen.00.steppin         101
+setp hpg.stepgen.00.dirpin          77
+
+
+# ################
+# Y [1] Axis
+# ################
+
+# axis enable chain
+newsig emcmot.01.enable bit
+sets emcmot.01.enable FALSE
+
+net emcmot.01.enable <= axis.1.amp-enable-out
+net emcmot.01.enable => hpg.stepgen.01.enable
+
+# position command and feedback
+net emcmot.01.pos-cmd <= axis.1.motor-pos-cmd
+net emcmot.01.pos-cmd => hpg.stepgen.01.position-cmd
+
+net motor.01.pos-fb <= hpg.stepgen.01.position-fb
+net motor.01.pos-fb => axis.1.motor-pos-fb
+
+# timing parameters
+setp hpg.stepgen.01.dirsetup        200 #[AXIS_1]DIRSETUP
+setp hpg.stepgen.01.dirhold         200 #[AXIS_1]DIRHOLD
+
+setp hpg.stepgen.01.steplen         10000 #[AXIS_1]STEPLEN
+setp hpg.stepgen.01.stepspace       10000 #[AXIS_1]STEPSPACE
+
+setp hpg.stepgen.01.position-scale  [AXIS_1]SCALE
+
+setp hpg.stepgen.01.maxaccel        [AXIS_1]STEPGEN_MAX_ACC
+
+setp hpg.stepgen.01.steppin         79
+setp hpg.stepgen.01.dirpin          59
+
+
+# ################
+# Z [2] Axis
+# ################
+
+# axis enable chain
+newsig emcmot.02.enable bit
+sets emcmot.02.enable FALSE
+
+net emcmot.02.enable <= axis.2.amp-enable-out
+net emcmot.02.enable => hpg.stepgen.02.enable
+
+# position command and feedback
+net emcmot.02.pos-cmd <= axis.2.motor-pos-cmd
+net emcmot.02.pos-cmd => hpg.stepgen.02.position-cmd
+
+net motor.02.pos-fb <= hpg.stepgen.02.position-fb
+net motor.02.pos-fb => axis.2.motor-pos-fb
+
+# timing parameters
+setp hpg.stepgen.02.dirsetup        200 #[AXIS_2]DIRSETUP
+setp hpg.stepgen.02.dirhold         200 #[AXIS_2]DIRHOLD
+
+setp hpg.stepgen.02.steplen         10000 #[AXIS_2]STEPLEN
+setp hpg.stepgen.02.stepspace       10000 #[AXIS_2]STEPSPACE
+
+setp hpg.stepgen.02.position-scale  [AXIS_2]SCALE
+
+setp hpg.stepgen.02.maxaccel        [AXIS_2]STEPGEN_MAX_ACC
+
+setp hpg.stepgen.02.steppin         145
+setp hpg.stepgen.02.dirpin          46
+
+
+# ##################################################
+# Standard I/O - EStop, Enables, Limit Switches, Etc
+# ##################################################
+
+# Enables
+net emcmot.00.enable => bb_gpio.p8.out-07
+setp bb_gpio.p8.out-07.invert 1
+net emcmot.01.enable => bb_gpio.p8.out-13
+setp bb_gpio.p8.out-13.invert 1
+net emcmot.02.enable => bb_gpio.p9.out-30
+setp bb_gpio.p9.out-30.invert 1
+
+# Home switches
+# X
+net x-home bb_gpio.p8.in-10 => axis.0.home-sw-in
+setp bb_gpio.p8.in-10.invert 1
+
+# Y
+net y-home bb_gpio.p8.in-12 => axis.1.home-sw-in
+setp bb_gpio.p8.in-12.invert 1
+
+# Z
+net z-home bb_gpio.p8.in-14 => axis.2.home-sw-in
+setp bb_gpio.p8.in-14.invert 1
+
+
+# Remote E-Stop debounced
+setp dbc.delay 5
+net estop-ext-raw bb_gpio.p8.in-08 => dbc.0.in
+net estop-ext dbc.0.out => iocontrol.0.emc-enable-in
+setp bb_gpio.p8.in-08.invert 1
+
+# create signals for tool loading loopback
+#net tool-prep-loop iocontrol.0.tool-prepare => iocontrol.0.tool-prepared
+#net tool-change-loop iocontrol.0.tool-change => iocontrol.0.tool-changed
+
+
+# Manual tool change scripts
+#loadusr -W hal_manualtoolchange
+#net tool-change iocontrol.0.tool-change => hal_manualtoolchange.change
+#net tool-changed iocontrol.0.tool-changed <= hal_manualtoolchange.changed
+#net tool-number iocontrol.0.tool-prep-number => hal_manualtoolchange.number
+#net tool-prepare-loopback iocontrol.0.tool-prepare => iocontrol.0.tool-prepared
+
+# Fake tool change
+net tool-prep-loop iocontrol.0.tool-prepare iocontrol.0.tool-prepared
+net tool-change-loop iocontrol.0.tool-change iocontrol.0.tool-changed
+
