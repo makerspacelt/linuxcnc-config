@@ -17,7 +17,7 @@ try:
     launcher.cleanup_session()  # cleanup a previous session
 
     launcher.start_process("configserver ~/Cetus/")  # start the configserver with Machineface an Cetus user interfaces
-    launcher.start_process('machinekit cnc.ini')  # start linuxcnc
+    launcher.start_process('machinekit cnc-qt.ini')  # start linuxcnc
 except subprocess.CalledProcessError:
     launcher.end_session()
     sys.exit(1)
