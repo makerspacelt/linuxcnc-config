@@ -25,6 +25,9 @@ loadrt [PRUCONF](DRIVER) prucode=$(HAL_RTMOD_DIR)/[PRUCONF](PRUBIN) [PRUCONF](CO
 # Deboune conponent for e-stop
 newinst debounce dbc pincount=1
 
+#loadrt laserraster linear_units=[TRAJ]LINEAR_UNITS axis_scale=[AXIS_0]SCALE axis_min_limit=[AXIS_0]MIN_LIMIT axis_max_limit=[AXIS_0]MAX_LIMIT
+loadrt laserfreq
+
 # ################################################
 # THREADS
 # ################################################
@@ -36,10 +39,94 @@ addf bb_gpio.write           servo-thread
 addf bb_gpio.read            servo-thread
 addf dbc.funct               servo-thread
 
-# ################
-# Config
-# ################
-setp motion.spindle-at-speed 1
+#addf laserraster.0.update      servo-thread
+addf laserfreq.0.update        servo-thread
+#addf laserraster.0.make-pulses servo-thread
+addf laserfreq.0.make-pulses   servo-thread
+
+# ###############################################
+# PWM
+# ###############################################
+setp hpg.pwmgen.00.pwm_period 83000
+setp hpg.pwmgen.00.out.00.pin 97
+setp hpg.pwmgen.00.out.00.enable 1
+setp hpg.pwmgen.00.out.00.scale 125
+
+
+# ###############
+# CUST
+# ##############
+net laser-power-cmd <= motion.analog-out-00 => hpg.pwmgen.00.out.00.value
+net coolant-mist <= iocontrol.0.coolant-mist
+net zpos-cmd-fb <= axis.2.motor-pos-cmd => axis.2.motor-pos-fb
+
+# M3/M5, not realtime/coordinated but master on/off:
+net laser-master <= motion.spindle-on
+# M62/M63 coordinated or M64/M65 immediate firing:
+# M62/M63 coordinated or M64/M65 immediate firing:
+net laser-dout <= motion.digital-out-00
+
+
+setp laserfreq.0.duration [LASER]PULSED_CUT_DURATION
+net current-vel motion.current-vel => laserfreq.0.velocity
+net laser-freq-speed motion.spindle-speed-out => laserfreq.0.pulse-per-unit
+net laser-freq-trick-axis-rev motion.spindle-reverse
+#net laser-dout => laserfreq.0.enable
+setp laserfreq.0.enable 1
+net laser-pulsed <= laserfreq.0.pulse
+
+########################
+
+loadrt comp names=laser-magic-z-comp
+addf laser-magic-z-comp servo-thread
+net zpos-fb <= axis.2.joint-pos-fb => laser-magic-z-comp.in0
+setp laser-magic-z-comp.in1 -0.0001
+net laser-magic-z <= laser-magic-z-comp.out
+
+########################
+
+# Final laser equation:  When laser-master is enabled (M3) fire for
+# raster or at pulse rate when cutting:
+#
+########################
+
+# Final laser equation:  When laser-master is enabled (M3) fire for
+# raster or at pulse rate when cutting:
+#
+# laser-final <= laser-master &
+#                    (laser-raster |
+#                   ((laser-magic-z | laser-dout) & laser-pulsed))
+
+loadrt lut5 names=laser-final-lut
+addf laser-final-lut servo-thread
+setp laser-final-lut.function 0xfeaa0000
+net  laser-dout        => laser-final-lut.in-1
+net  laser-magic-z     => laser-final-lut.in-2
+net  laser-pulsed      => laser-final-lut.in-3
+net  laser-master      => laser-final-lut.in-4
+net laser-final <= laser-final-lut.out
+
+########################
+# exhaust/assist-air control
+
+loadrt oneshot names=laser-exhaust-oneshot
+loadrt or2 names=laser-exhaust-or
+addf laser-exhaust-oneshot servo-thread
+addf laser-exhaust-or servo-thread
+
+net laser-master        => laser-exhaust-oneshot.in
+net laser-exhaust-extra <= laser-exhaust-oneshot.out
+setp laser-exhaust-oneshot.retriggerable 1
+setp laser-exhaust-oneshot.width [LASER]EXTRA_EXHAUST_TIME
+setp laser-exhaust-oneshot.rising 0
+setp laser-exhaust-oneshot.falling 1
+
+net laser-master        => laser-exhaust-or.in0
+net laser-exhaust-extra => laser-exhaust-or.in1
+net laser-exhaust       <= laser-exhaust-or.out
+
+
+net laser-final => bb_gpio.p9.out-16
 
 # ################
 # X [0] Axis
@@ -117,14 +204,9 @@ net emcmot.01.enable => bb_gpio.p8.out-13
 
 # Home switches
 # X
-net x-home bb_gpio.p8.in-10 => axis.0.home-sw-in
+#net x-home bb_gpio.p8.in-10 => axis.0.home-sw-in
 setp bb_gpio.p8.in-10.invert 1
 
-# Y
-net y-home bb_gpio.p8.in-12 => axis.1.home-sw-in
-setp bb_gpio.p8.in-12.invert 1
-
-# Remote E-Stop debounced
 setp dbc.delay 5
 net estop-ext-raw bb_gpio.p8.in-08 => dbc.0.in
 net estop-ext dbc.0.out => iocontrol.0.emc-enable-in
