@@ -35,14 +35,6 @@
         <led halpin="laser-master"/>
         <label text="Laser Enabled"/>
     </hbox>
-    <hbox>
-        <led halpin="air-assist"/>
-        <label text="Air Assist"/>
-    </hbox>
-    <hbox>
-        <led halpin="laser-exhaust"/>
-        <label text="Exhaust fan"/>
-    </hbox>
     <button halpin="xy-touchoff" text="Touch-off X/Y"/>
     <button halpin="move-origin" text="Move to origin"/>
 
@@ -72,18 +64,20 @@
 
     <labelframe text="Triggers">
         <hbox>
-            <led halpin="laser-raster"/>
-            <label text="Raster"/>
-        </hbox>
-
-        <hbox>
             <led halpin="laser-dout"/>
-            <label text="Digital Out 0"/>
+            <label text="M62/M63 or M64/M65"/>
         </hbox>
         <hbox>
             <led halpin="laser-magic-z"/>
             <label text="Magic Z"/>
             <button halpin="z-to-zero" text="Reset Z"/>
+        </hbox>
+    </labelframe>
+
+    <labelframe text="Laser">
+        <hbox>
+            <led halpin="laser-output"/>
+            <label text="Laser output"/>
         </hbox>
     </labelframe>
 
