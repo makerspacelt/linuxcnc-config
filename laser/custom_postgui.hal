@@ -20,10 +20,11 @@ net button-laser-test-fire pyvcp.laser-test-fire => halui.mdi-command-05
 net button-move-origin pyvcp.move-origin => halui.mdi-command-06
 net button-reset-offset pyvcp.reset-offset => halui.mdi-command-07
 
-loadrt time
-addf time.0 servo-thread
-net cycle-timer time.0.start <= halui.program.is-running
-net cycle-seconds pyvcp.time-seconds <= time.0.seconds
-net cycle-minutes pyvcp.time-minutes <= time.0.minutes
-net cycle-hours pyvcp.time-hours <= time.0.hours
+newinst timev2 run-timer
+addf run-timer.funct servo-thread
+
+net cycle-timer run-timer.start <= halui.program.is-running
+net cycle-seconds pyvcp.time-seconds <= run-timer.seconds
+net cycle-minutes pyvcp.time-minutes <= run-timer.minutes
+net cycle-hours pyvcp.time-hours <= run-timer.hours
 
