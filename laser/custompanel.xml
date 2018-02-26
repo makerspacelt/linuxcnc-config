@@ -36,6 +36,7 @@
         <label text="Laser Enabled"/>
     </hbox>
     <button halpin="xy-touchoff" text="Touch-off X/Y"/>
+	<button halpin="reset-offset" text="Reset Offsets"/>
     <button halpin="move-origin" text="Move to origin"/>
 
     <labelframe text="Pulses">
@@ -80,7 +81,14 @@
             <label text="Laser output"/>
         </hbox>
     </labelframe>
-
+	<scale>
+		<halpin>"test-power"</halpin>
+		<resolution>1</resolution>
+		<orient>HORIZONTAL</orient>
+		<initval>30</initval>
+		<min_>1</min_>
+		<max_>100</max_>
+	</scale>
     <button halpin="laser-test-fire" text="Test fire laser"/>
 
 </pyvcp>

@@ -28,6 +28,9 @@ newinst debounce dbc pincount=1
 # Scale component for reversing laser PWM out = in * gain + offset
 newinst scale ipwm
 
+# Limit output power
+newint limit1v2 lim-power
+
 # PPI/Duty calculator
 loadrt laserfreq
 
@@ -42,6 +45,7 @@ addf bb_gpio.write           servo-thread
 addf bb_gpio.read            servo-thread
 addf dbc.funct               servo-thread
 addf ipwm.funct              servo-thread
+addf lim-power.funct         servo-thread
 
 addf laserfreq.0.update        servo-thread
 addf laserfreq.0.make-pulses   servo-thread
@@ -60,7 +64,10 @@ setp hpg.pwmgen.00.out.00.scale 100
 net laser-power-cmd <= motion.analog-out-00
 setp ipwm.gain -1
 setp ipwm.offset 100
-net laser-power-cmd => ipwm.in
+setp lim-power.min 0
+setp lim-power.max 75
+net laser-power-cmd => lim-power.in
+net laser-power lim-power.out => ipwm.in
 net pwm-out hpg.pwmgen.00.out.00.value <= ipwm.out
 
 net coolant-mist <= iocontrol.0.coolant-mist

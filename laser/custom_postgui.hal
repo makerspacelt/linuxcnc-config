@@ -18,6 +18,7 @@ net button-z-to-zero pyvcp.z-to-zero => halui.mdi-command-00
 net button-xy-touchoff pyvcp.xy-touchoff => halui.mdi-command-01
 net button-laser-test-fire pyvcp.laser-test-fire => halui.mdi-command-05
 net button-move-origin pyvcp.move-origin => halui.mdi-command-06
+net button-reset-offset pyvcp.reset-offset => halui.mdi-command-07
 
 loadrt time
 addf time.0 servo-thread
