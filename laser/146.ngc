@@ -3,6 +3,6 @@ O146 sub
   M68 E0 Q#<_hal[pyvcp.test-power-f]> (% power)
   G1 Z-0.01 F10
   G0 Z0
-  M2
 O146 endsub
+M2
 
