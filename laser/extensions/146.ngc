@@ -1,8 +1,8 @@
-O146 sub
+o<146> sub
   M4 S100 (% dutycycle)
   M68 E0 Q#<_hal[pyvcp.test-power-f]> (% power)
   G1 Z-0.01 F10
   G0 Z0
-O146 endsub
+o<146> endsub
 M2
 
