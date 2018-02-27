@@ -1,86 +1,89 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <pyvcp>
-
-  <hbox>
-    <label>
-       <text>"Cycle Time"</text>
-       <font>("Helvetica",14)</font>
-     </label>
-     <u32>
-        <halpin>"time-hours"</halpin>
-        <font>("Helvetica",14)</font>
-        <format>"2d"</format>
-      </u32>
-      <label>
-        <text>":"</text>
-        <font>("Helvetica",14)</font>
-      </label>
-      <u32>
-        <halpin>"time-minutes"</halpin>
-        <font>("Helvetica",14)</font>
-        <format>"02d"</format>
-      </u32>
-      <label>
-        <text>":"</text>
-        <font>("Helvetica",14)</font>
-        </label>
-      <u32>
-        <halpin>"time-seconds"</halpin>
-        <font>("Helvetica",14)</font>
-        <format>"02d"</format>
-      </u32>
-    </hbox>
-
-    <hbox>
-        <led halpin="laser-master"/>
-        <label text="Laser Enabled"/>
-    </hbox>
-    <button halpin="xy-touchoff" text="Touch-off X/Y"/>
+	<hbox>
+		<label>
+			<text>"Cycle Time"</text>
+			<font>("Helvetica",14)</font>
+		</label>
+		<u32>
+			<halpin>"time-hours"</halpin>
+			<font>("Helvetica",14)</font>
+			<format>"2d"</format>
+		</u32>
+		<label>
+			<text>":"</text>
+			<font>("Helvetica",14)</font>
+		</label>
+		<u32>
+			<halpin>"time-minutes"</halpin>
+			<font>("Helvetica",14)</font>
+			<format>"02d"</format>
+		</u32>
+		<label>
+			<text>":"</text>
+			<font>("Helvetica",14)</font>
+			</label>
+		<u32>
+			<halpin>"time-seconds"</halpin>
+			<font>("Helvetica",14)</font>
+			<format>"02d"</format>
+		</u32>
+	</hbox>
+	<hbox>
+		<led halpin="laser-master"/>
+		<label text="Laser Enabled"/>
+	</hbox>
+	<button halpin="xy-touchoff" text="Touch-off X/Y"/>
 	<button halpin="reset-offset" text="Reset Offsets"/>
-    <button halpin="move-origin" text="Move to origin"/>
-
-    <labelframe text="Pulses">
-        <hbox>
-            <led halpin="duty-cycle-mode"/>
-            <label text="Duty Cycle"/>
-            <led halpin="ppi-mode"/>
-            <label text="PPI"/>
-        </hbox>
-        <bar>
-            <halpin>"spindle"</halpin>
-            <max_>500</max_>
-        </bar>
-        <hbox>
-            <led halpin="laser-continuous"/>
-            <label text="Continuous fire"/>
-        </hbox>
-    </labelframe>
-
-    <labelframe text="Power">
-        <bar>
+	<button halpin="move-origin" text="Move to origin"/>
+	<labelframe text="Pulses">
+		<hbox>
+			<led halpin="duty-cycle-mode"/>
+			<label text="Duty Cycle"/>
+			<led halpin="ppi-mode"/>
+			<label text="PPI"/>
+		</hbox>
+		<bar>
+			<halpin>"spindle"</halpin>
+			<max_>500</max_>
+		</bar>
+		<hbox>
+			<led halpin="laser-continuous"/>
+			<label text="Continuous fire"/>
+		</hbox>
+	</labelframe>
+	<labelframe text="Power">
+		<meter>
             <halpin>"power"</halpin>
+            <text>"Power"</text>
+            <subtext>"Responsibility"</subtext>
+            <min_>0</min_>
             <max_>100</max_>
-        </bar>
-    </labelframe>
-
-    <labelframe text="Triggers">
-        <hbox>
-            <led halpin="laser-dout"/>
-            <label text="M62/M63 or M64/M65"/>
-        </hbox>
-        <hbox>
-            <led halpin="laser-magic-z"/>
-            <label text="Magic Z"/>
-            <button halpin="z-to-zero" text="Reset Z"/>
-        </hbox>
-    </labelframe>
-
-    <labelframe text="Laser">
-        <hbox>
-            <led halpin="laser-output"/>
-            <label text="Laser output"/>
-        </hbox>
-    </labelframe>
+            <majorscale>10</majorscale>
+            <minorscale>2</minorscale>
+            <region1>(60,75,"yellow")</region1>
+            <region2>(75,100,"red")</region2>
+            <region3>(15,60,"green")</region3>
+            <region4>(0,15,"grey")</region4>
+        </meter>
+	</labelframe>
+	<labelframe text="Triggers">
+		<hbox>
+			<led halpin="laser-dout"/>
+			<label text="M62/M63 or M64/M65"/>
+		</hbox>
+		<hbox>
+			<led halpin="laser-magic-z"/>
+			<label text="Magic Z"/>
+			<button halpin="z-to-zero" text="Reset Z"/>
+		</hbox>
+	</labelframe>
+	<labelframe text="Laser">
+		<hbox>
+			<led halpin="laser-output"/>
+			<label text="Laser output"/>
+		</hbox>
+	</labelframe>
 	<scale>
 		<halpin>"test-power"</halpin>
 		<resolution>1</resolution>
@@ -89,6 +92,5 @@
 		<min_>1</min_>
 		<max_>100</max_>
 	</scale>
-    <button halpin="laser-test-fire" text="Test fire laser"/>
-
+	<button halpin="laser-test-fire" text="Test fire laser"/>
 </pyvcp>
