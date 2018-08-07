@@ -65,9 +65,11 @@ net laser-power-cmd <= motion.analog-out-00
 setp ipwm.gain -1
 setp ipwm.offset 100
 setp lim-power.min 0
-setp lim-power.max 75
+setp lim-power.max 70
+
 net laser-power-cmd => lim-power.in
 net laser-power lim-power.out => ipwm.in
+
 net pwm-out hpg.pwmgen.00.out.00.value <= ipwm.out
 
 net coolant-mist <= iocontrol.0.coolant-mist
